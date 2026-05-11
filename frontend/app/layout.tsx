@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -29,9 +30,11 @@ export default function RootLayout({
       className={`${inter.variable} ${outfit.variable} dark h-full antialiased`}
       style={{ colorScheme: "dark" }}
     >
-      <body className="bg-black text-zinc-50 min-h-full flex flex-col font-sans">
-        {children}
-        <Toaster position="top-center" richColors />
+      <body className={`${inter.variable} ${outfit.variable} antialiased dark`}>
+        <GlobalErrorBoundary>
+          {children}
+          <Toaster position="top-right" expand={true} richColors />
+        </GlobalErrorBoundary>
       </body>
     </html>
   );

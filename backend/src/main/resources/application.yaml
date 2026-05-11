@@ -2,18 +2,20 @@ spring:
   application:
     name: backend
   datasource:
-    url: jdbc:h2:mem:rewifydb
-    driverClassName: org.h2.Driver
-    username: sa
-    password: password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/rewify}
+    username: ${SPRING_DATASOURCE_USERNAME:user}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driverClassName: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   h2:
     console:
-      enabled: true
+      enabled: false
 
 management:
   endpoints:
@@ -35,5 +37,5 @@ application:
       expiration: 86400000 # 1 day
   stream:
     livekit:
-      api-key: "devkey"
-      api-secret: "secret"
+      api-key: ${LIVEKIT_API_KEY:devkey}
+      api-secret: ${LIVEKIT_API_SECRET:secret}

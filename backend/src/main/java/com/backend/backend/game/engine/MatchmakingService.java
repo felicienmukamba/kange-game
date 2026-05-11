@@ -20,13 +20,23 @@ public class MatchmakingService {
         tryMatchTournament(tournamentId);
     }
 
+    private final com.backend.backend.notification.NotificationService notificationService;
+
     private void tryMatchTournament(Long tournamentId) {
         Queue<User> queue = tournamentQueues.get(tournamentId);
-        while (queue != null && queue.size() >= 4) { // 4 players per match for tournaments
+        while (queue != null && queue.size() >= 4) {
             List<User> players = new ArrayList<>();
-            for (int i = 0; i < 4; i++) players.add(queue.poll());
+            for (int i = 0; i < 4; i++) {
+                User player = queue.poll();
+                players.add(player);
+                notificationService.sendPrivateNotification(
+                    player.getUsername(), 
+                    "Match found! Joining arena...", 
+                    "MATCH_FOUND"
+                );
+            }
             
-            // Start tournament match
+            // Logic to redirect players to a new GameSession
             System.out.println("Tournament Match started for ID: " + tournamentId + " with " + players.size() + " players");
         }
     }
