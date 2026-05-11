@@ -4,189 +4,202 @@ import { useAuthStore } from '@/app/lib/store';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Gamepad2, Play, Trophy, Users, Zap, TrendingUp, Star, Sparkles } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Gamepad2, Play, Trophy, Users, Zap, TrendingUp, Star, Sparkles, Bell, ArrowRight, Flame, Clock, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import AppLayout from '@/components/AppLayout';
+
+const QUICK_GAMES = [
+  { name: 'Quiz Battle', icon: '⚡', players: '2.4k', border: 'border-yellow-500/20 bg-yellow-500/5', href: '/games/quiz' },
+  { name: 'Speed Math', icon: '🧮', players: '890', border: 'border-blue-500/20 bg-blue-500/5', href: '/games/math' },
+  { name: 'Word Rush', icon: '📝', players: '1.2k', border: 'border-green-500/20 bg-green-500/5', href: '/games/words' },
+  { name: 'Memory Pro', icon: '🧠', players: '560', border: 'border-purple-500/20 bg-purple-500/5', href: '/games/memory' },
+];
+
+const TOP_PLAYERS = ['Shadow_X', 'NeonByte', 'CosmicAce'];
 
 export default function DashboardPage() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    // WebSocket notification listener setup
-    // socket.on('notification', (data) => {
-    //   toast(data.message, { icon: <Zap className="w-4 h-4 text-yellow-400" /> });
-    // });
-    
-    const timer = setTimeout(() => {
-      toast.info('New tournament starting in 10 minutes!', {
-        description: 'Join the "Global Logic" arena now!',
-        action: {
-          label: 'Join',
-          onClick: () => router.push('/live/tourney-1')
-        },
+    const t = setTimeout(() => {
+      toast.info('Tournament starting soon!', {
+        description: 'Join "Global Logic" arena now!',
+        action: { label: 'Join', onClick: () => router.push('/live/tourney-1') },
       });
     }, 5000);
-    
-    return () => clearTimeout(timer);
+    return () => clearTimeout(t);
   }, [router]);
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 lg:p-10">
-      <div className="max-w-7xl mx-auto space-y-10">
-        
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border-2 border-indigo-500 p-1">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback className="bg-zinc-800 text-2xl">{user.username[0].toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold font-heading">Welcome back, {user.username}!</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20">Level {user.level}</Badge>
-                <span className="text-zinc-500 text-sm">{user.role}</span>
-              </div>
-            </div>
+    <AppLayout>
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-7">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-black tracking-[0.3em] text-zinc-500 uppercase mb-1">Dashboard</div>
+            <h1 className="text-3xl font-black tracking-tighter">Hey, {user.username} 👋</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <div className="text-sm text-zinc-500 uppercase tracking-wider font-semibold">Balance</div>
-              <div className="text-2xl font-bold flex items-center gap-2 justify-end">
-                <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" /> {user.coins}
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <button className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors">
+                <Bell className="w-5 h-5 text-zinc-400" />
+              </button>
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-black flex items-center justify-center">3</span>
             </div>
-            <Button variant="outline" onClick={logout} className="border-zinc-800 hover:bg-zinc-900">Logout</Button>
+            <Link href="/creator">
+              <button className="flex items-center gap-2 px-4 py-2.5 bg-white text-black font-black rounded-xl hover:bg-zinc-100 transition-all text-sm">
+                <Sparkles className="w-4 h-4" /> Create
+              </button>
+            </Link>
           </div>
-        </header>
-
-        {/* Actions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <Link href="/creator">
-                <Card className="bg-linear-to-br from-indigo-600 to-purple-700 border-none group cursor-pointer hover:scale-[1.02] transition-all">
-                   <CardContent className="p-8">
-                      <Sparkles className="w-12 h-12 text-white/80 mb-4 group-hover:rotate-12 transition-transform" />
-                      <h3 className="text-2xl font-bold text-white mb-2">Creator Studio</h3>
-                      <p className="text-white/60">Create viral challenges and earn coins from participants.</p>
-                   </CardContent>
-                </Card>
-             </Link>
-
-             <Link href="/leaderboard">
-                <Card className="bg-zinc-900 border-zinc-800 group cursor-pointer hover:border-yellow-500/50 transition-all">
-                   <CardContent className="p-8">
-                      <Trophy className="w-12 h-12 text-yellow-500 mb-4 group-hover:scale-110 transition-transform" />
-                      <h3 className="text-2xl font-bold text-white mb-2">Leaderboards</h3>
-                      <p className="text-zinc-500">See where you stand among the world&apos;s best players.</p>
-                   </CardContent>
-                </Card>
-             </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Stats Section */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-indigo-400" /> Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-zinc-400">XP to next level</span>
-                    <span className="text-white font-medium">{user.xp}/1000</span>
-                  </div>
-                  <Progress value={(user.xp / 1000) * 100} className="h-2 bg-zinc-800" />
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <div className="bg-zinc-800/50 p-4 rounded-xl text-center">
-                    <div className="text-zinc-500 text-xs uppercase mb-1">Rank</div>
-                    <div className="text-xl font-bold">#412</div>
-                  </div>
-                  <div className="bg-zinc-800/50 p-4 rounded-xl text-center">
-                    <div className="text-zinc-500 text-xs uppercase mb-1">Games</div>
-                    <div className="text-xl font-bold">24</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Coins', value: user.coins, icon: Star, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+            { label: 'Level', value: user.level, icon: TrendingUp, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+            { label: 'Games', value: 24, icon: Gamepad2, color: 'text-green-400', bg: 'bg-green-500/10' },
+            { label: 'Rank', value: '#412', icon: Trophy, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+          ].map((s, i) => (
+            <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+              className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 flex items-center gap-4 hover:bg-white/[0.05] transition-colors">
+              <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center`}>
+                <s.icon className={`w-5 h-5 ${s.color}`} />
+              </div>
+              <div>
+                <div className="text-2xl font-black">{s.value}</div>
+                <div className="text-[11px] text-zinc-500 font-bold uppercase">{s.label}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
 
-            <Card className="bg-indigo-600/10 border-indigo-500/20">
-               <CardContent className="p-6">
-                 <div className="flex items-center gap-4">
-                   <div className="p-3 bg-indigo-600 rounded-lg">
-                     <Trophy className="w-6 h-6 text-white" />
-                   </div>
-                   <div>
-                     <div className="text-indigo-300 font-semibold">Weekly Challenge</div>
-                     <div className="text-sm text-indigo-200/70">Win 5 quizzes to get 500 bonus coins!</div>
-                   </div>
-                 </div>
-               </CardContent>
-            </Card>
+        {/* XP Bar */}
+        <div className="bg-gradient-to-r from-indigo-600/10 to-purple-600/10 border border-indigo-500/20 rounded-2xl p-5">
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-bold text-sm text-indigo-300">Level {user.level} Progress</span>
+            <span className="text-xs text-zinc-500 font-bold">{user.xp} / 1000 XP</span>
+          </div>
+          <Progress value={(user.xp / 1000) * 100} className="h-2 bg-white/10" />
+          <div className="mt-1.5 text-xs text-zinc-500">{1000 - user.xp} XP to Level {user.level + 1}</div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Live */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-black text-lg flex items-center gap-2">
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> Live Now
+                </h2>
+                <Link href="/live" className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors">
+                  See all <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { title: 'Global Trivia Night', viewers: '1.2k', host: 'xXProGamerXx', bg: 'from-indigo-900 to-purple-900', href: '/live/session-1' },
+                  { title: 'Speed Run Challenge', viewers: '890', host: 'SpeedKing99', bg: 'from-rose-900 to-pink-900', href: '/live/session-2' },
+                ].map((s) => (
+                  <Link href={s.href} key={s.href}>
+                    <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}
+                      className={`relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br ${s.bg} border border-white/5 cursor-pointer`}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      <div className="absolute top-3 left-3 flex items-center gap-2">
+                        <Badge className="bg-red-500 text-white border-none text-[10px] animate-pulse px-2">LIVE</Badge>
+                        <span className="text-[10px] text-white/70 flex items-center gap-1"><Users className="w-3 h-3" /> {s.viewers}</span>
+                      </div>
+                      <div className="absolute bottom-3 left-3">
+                        <div className="font-bold text-sm">{s.title}</div>
+                        <div className="text-xs text-zinc-400">by {s.host}</div>
+                      </div>
+                      <div className="absolute top-3 right-3 w-8 h-8 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <Play className="w-4 h-4 fill-white text-white" />
+                      </div>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Games */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-black text-lg flex items-center gap-2"><Zap className="w-5 h-5 text-yellow-400" /> Quick Games</h2>
+                <Link href="/games" className="text-xs text-zinc-500 hover:text-white flex items-center gap-1 transition-colors">All <ChevronRight className="w-3 h-3" /></Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {QUICK_GAMES.map((g) => (
+                  <Link href={g.href} key={g.name}>
+                    <motion.div whileHover={{ y: -4 }} whileTap={{ scale: 0.97 }}
+                      className={`border ${g.border} rounded-2xl p-4 flex flex-col gap-2 cursor-pointer group hover:border-white/20 transition-all`}>
+                      <span className="text-2xl">{g.icon}</span>
+                      <div className="font-bold text-sm">{g.name}</div>
+                      <div className="text-[11px] text-zinc-500 flex items-center gap-1"><Users className="w-3 h-3" />{g.players}</div>
+                      <button className="mt-1 text-[11px] font-black text-white bg-white/10 rounded-lg py-1.5 group-hover:bg-white/20 transition-colors">PLAY</button>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Main Content Section */}
-          <div className="lg:col-span-2 space-y-8">
-            <div>
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Play className="w-5 h-5 text-green-400" /> Live Now
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    whileHover={{ scale: 1.02 }}
-                    className="group relative aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800"
-                  >
-                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent z-10" />
-                    <div className="absolute top-4 left-4 z-20">
-                      <Badge className="bg-red-500 text-white border-none animate-pulse">LIVE</Badge>
-                    </div>
-                    <div className="absolute bottom-4 left-4 z-20">
-                      <div className="text-lg font-bold">Global Trivia Night #{i}</div>
-                      <div className="text-sm text-zinc-400 flex items-center gap-2">
-                        <Users className="w-4 h-4" /> 1.2k viewers
-                      </div>
-                    </div>
-                    <Link href={`/live/session-${i}`} className="absolute inset-0 z-30" />
-                  </motion.div>
+          {/* Sidebar content */}
+          <div className="space-y-5">
+            <div className="bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Flame className="w-5 h-5 text-orange-400" />
+                <span className="font-black text-sm">Weekly Challenge</span>
+              </div>
+              <p className="text-zinc-400 text-sm mb-3">Win 5 quizzes → <span className="text-yellow-400 font-bold">+500 coins</span></p>
+              <Progress value={40} className="h-1.5 bg-white/10 mb-2" />
+              <div className="flex justify-between text-xs text-zinc-500">
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 3 days left</span>
+                <span>2/5</span>
+              </div>
+            </div>
+
+            {/* Achievements */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5">
+              <h3 className="font-black text-sm mb-3 flex items-center gap-2"><Trophy className="w-4 h-4 text-yellow-400" /> Achievements</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[{ icon: '🏆', label: 'First Victory', earned: true }, { icon: '⚡', label: 'Speed Demon', earned: true }, { icon: '🎯', label: 'Sharp Shooter', earned: false }, { icon: '🌟', label: 'Rising Star', earned: false }].map((a) => (
+                  <div key={a.label} className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center ${a.earned ? 'border-yellow-500/30 bg-yellow-500/10' : 'border-white/5 opacity-40'}`}>
+                    <span className="text-xl">{a.icon}</span>
+                    <span className="text-[10px] font-bold text-zinc-400 leading-tight">{a.label}</span>
+                  </div>
                 ))}
               </div>
             </div>
 
-            <div>
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-400" /> Quick Games
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {['Quiz Battle', 'Speed Math', 'Word Rush'].map((game) => (
-                  <Card key={game} className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer group">
-                    <CardContent className="p-4 flex flex-col items-center text-center space-y-3">
-                      <div className="p-4 bg-zinc-800 rounded-2xl group-hover:bg-indigo-500/20 transition-colors">
-                        <Gamepad2 className="w-8 h-8 text-indigo-400" />
-                      </div>
-                      <div className="font-semibold">{game}</div>
-                      <Button variant="ghost" size="sm" className="w-full text-xs hover:bg-zinc-800">Play Now</Button>
-                    </CardContent>
-                  </Card>
+            {/* Leaderboard teaser */}
+            <Link href="/leaderboard">
+              <motion.div whileHover={{ scale: 1.01 }} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 cursor-pointer hover:border-white/10 transition-all group">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-black text-sm">Top Players</h3>
+                  <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-white transition-colors" />
+                </div>
+                {TOP_PLAYERS.map((name, i) => (
+                  <div key={name} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
+                    <span className="text-xs font-black text-zinc-600 w-4">#{i + 1}</span>
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-black">{name[0]}</div>
+                    <span className="text-sm font-bold flex-1">{name}</span>
+                    <span className="text-xs text-zinc-500">{(3 - i) * 1240}pts</span>
+                  </div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </Link>
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

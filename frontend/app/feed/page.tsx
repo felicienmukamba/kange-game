@@ -1,188 +1,200 @@
 'use client';
 
-import { useRef } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, MessageCircle, Share2, Play, Plus, Zap, Music2, Trophy, Flame } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Flame, Zap, Users, Plus } from 'lucide-react';
+import AppLayout from '@/components/AppLayout';
+import { useAuthStore } from '@/app/lib/store';
 
-interface FeedItem {
-  id: number;
-  author: string;
-  avatar: string;
-  content: string;
-  likes: string;
-  comments: string;
-  shares: string;
-  category: string;
-  isLive: boolean;
-  music?: string;
-}
-
-const MOCK_FEED: FeedItem[] = [
+const POSTS = [
   {
     id: 1,
-    author: 'GamerLegend',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GamerLegend',
-    content: 'Just reached Master Rank in Global Trivia! 🔥 #RewifyArena #Gaming',
-    likes: '45.2K',
-    comments: '1.2K',
-    shares: '8.4K',
-    category: 'Gaming',
-    isLive: true,
-    music: 'Original Sound - GamerLegend'
+    user: { name: 'Shadow_X', avatar: '🥷', badge: 'PRO', level: 42 },
+    time: '2m ago',
+    content: 'Just hit a 20-win streak in Quiz Battle 🔥 The grind never stops. Who wants to challenge me?',
+    image: null,
+    likes: 248,
+    comments: 34,
+    shares: 12,
+    liked: false,
+    tag: 'Gaming',
+    tagColor: 'text-indigo-400 bg-indigo-500/10',
   },
   {
     id: 2,
-    author: 'TriviaQueen',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TriviaQueen',
-    content: 'Who can beat my score in Science Quiz? Join the live arena now! 🧪✨',
-    likes: '12.8K',
-    comments: '840',
-    shares: '2.1K',
-    category: 'Education',
-    isLive: true,
-    music: 'Science Vibes - StudyBeats'
+    user: { name: 'NeonByte', avatar: '🤖', badge: 'CREATOR', level: 38 },
+    time: '15m ago',
+    content: 'New stream starting in 5 mins! We\'re doing a LIVE tournament with 1000 coin prize pool 💰',
+    image: '/images/streaming.png',
+    likes: 512,
+    comments: 89,
+    shares: 67,
+    liked: true,
+    tag: 'Live',
+    tagColor: 'text-red-400 bg-red-500/10',
   },
   {
     id: 3,
-    author: 'RewifyOfficial',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rewify',
-    content: 'New Season Items are here! Check the marketplace for legendary skins. 💎',
-    likes: '102K',
-    comments: '5.6K',
-    shares: '24K',
-    category: 'Official',
-    isLive: false,
-    music: 'Rewify Theme - Electronic'
-  }
+    user: { name: 'CosmicAce', avatar: '🦅', badge: 'TOP 10', level: 55 },
+    time: '1h ago',
+    content: 'The new Marketplace drop is insane 😱 Grabbed the legendary Dragon shield before it sold out. Limited items are back, grab yours now.',
+    image: '/images/marketplace.png',
+    likes: 1024,
+    comments: 156,
+    shares: 203,
+    liked: false,
+    tag: 'Market',
+    tagColor: 'text-green-400 bg-green-500/10',
+  },
+];
+
+const STORIES = [
+  { name: 'You', avatar: '➕', isAdd: true },
+  { name: 'Shadow_X', avatar: '🥷', active: true },
+  { name: 'NeonByte', avatar: '🤖', active: true },
+  { name: 'CosmicAce', avatar: '🦅', active: false },
+  { name: 'SpeedKing', avatar: '⚡', active: true },
 ];
 
 export default function FeedPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuthStore();
+  const [posts, setPosts] = useState(POSTS);
+  const [newPost, setNewPost] = useState('');
 
-  const handleShare = (author: string) => {
-    navigator.clipboard.writeText(`Check out ${author}'s stream on REWIFY!`);
-    toast.success('Link copied to clipboard!');
+  const toggleLike = (id: number) => {
+    setPosts((prev) =>
+      prev.map((p) => p.id === id ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p)
+    );
   };
 
   return (
-    <div className="h-screen w-full bg-black overflow-hidden flex flex-col md:flex-row">
-      
-      {/* Desktop Sidebar (Optional/Hidden on Mobile) */}
-      <aside className="hidden md:flex w-24 bg-zinc-950 border-r border-zinc-800 flex-col items-center py-10 gap-10">
-         <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/20">
-            <Zap className="w-8 h-8 text-white fill-white" />
-         </div>
-         <nav className="flex flex-col gap-8">
-            <button className="p-3 text-white hover:bg-zinc-900 rounded-2xl transition-colors"><Trophy className="w-6 h-6" /></button>
-            <button className="p-3 text-zinc-500 hover:bg-zinc-900 rounded-2xl transition-colors"><Flame className="w-6 h-6" /></button>
-            <button className="p-3 text-zinc-500 hover:bg-zinc-900 rounded-2xl transition-colors"><MessageCircle className="w-6 h-6" /></button>
-         </nav>
-      </aside>
+    <AppLayout>
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-black tracking-[0.3em] text-zinc-500 uppercase mb-1">Community</div>
+            <h1 className="text-3xl font-black tracking-tighter">Social Feed</h1>
+          </div>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-white text-black font-black rounded-xl hover:bg-zinc-100 transition-all text-sm">
+            <Flame className="w-4 h-4" /> Trending
+          </button>
+        </div>
 
-      {/* Main Swipe Container */}
-      <div 
-        ref={containerRef}
-        className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory hide-scrollbar"
-      >
-        {MOCK_FEED.map((item) => (
-          <section 
-            key={item.id}
-            className="h-full w-full snap-start relative flex items-center justify-center bg-zinc-900"
-          >
-            {/* Background Content (Video Placeholder) */}
-            <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/80 z-10" />
-            <div className="w-full h-full relative overflow-hidden">
-               {/* Animated Background Placeholder */}
-               <div className={`absolute inset-0 bg-linear-to-br transition-all duration-1000 ${item.id % 2 === 0 ? 'from-indigo-900/40 to-purple-900/40' : 'from-zinc-900 to-black'}`} />
-               <Play className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 text-white/10" />
+        {/* Stories */}
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          {STORIES.map((s) => (
+            <div key={s.name} className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer group">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all group-hover:scale-105 ${
+                s.isAdd ? 'bg-white/5 border-2 border-dashed border-white/20' :
+                s.active ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-black bg-zinc-900' :
+                'bg-zinc-900 opacity-60'
+              }`}>
+                {s.avatar}
+              </div>
+              <span className="text-[10px] font-bold text-zinc-500 group-hover:text-white transition-colors">{s.name}</span>
             </div>
+          ))}
+        </div>
 
-            {/* Interaction Buttons (Right Side) */}
-            <div className="absolute right-4 bottom-32 z-30 flex flex-col items-center gap-6">
-               <div className="relative mb-2">
-                  <Avatar className="w-12 h-12 border-2 border-white ring-2 ring-indigo-500 p-0.5">
-                     <AvatarImage src={item.avatar} />
-                     <AvatarFallback>{item.author[0]}</AvatarFallback>
-                  </Avatar>
-                  <button className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-black">
-                     <Plus className="w-3 h-3 text-white" />
-                  </button>
-               </div>
-
-               <button className="flex flex-col items-center gap-1 group">
-                  <div className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center group-hover:bg-red-500/20 transition-all">
-                     <Heart className="w-7 h-7 text-white group-hover:text-red-500 group-hover:fill-red-500 transition-all" />
-                  </div>
-                  <span className="text-[10px] font-black">{item.likes}</span>
-               </button>
-
-               <button className="flex flex-col items-center gap-1 group">
-                  <div className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center group-hover:bg-indigo-500/20 transition-all">
-                     <MessageCircle className="w-7 h-7 text-white group-hover:text-indigo-400 transition-all" />
-                  </div>
-                  <span className="text-[10px] font-black">{item.comments}</span>
-               </button>
-
-               <button onClick={() => handleShare(item.author)} className="flex flex-col items-center gap-1 group">
-                  <div className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center group-hover:bg-green-500/20 transition-all">
-                     <Share2 className="w-7 h-7 text-white group-hover:text-green-400 transition-all" />
-                  </div>
-                  <span className="text-[10px] font-black">{item.shares}</span>
-               </button>
-               
-               {/* Music Disk Animation */}
-               <div className="w-12 h-12 bg-zinc-800 rounded-full border-4 border-zinc-700 mt-4 animate-spin-slow overflow-hidden flex items-center justify-center">
-                  <div className="w-4 h-4 bg-zinc-600 rounded-full border-2 border-zinc-500" />
-               </div>
+        {/* Post Composer */}
+        <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-lg font-black flex-shrink-0">
+              {user?.username?.[0]?.toUpperCase()}
             </div>
-
-            {/* Content Overlay (Bottom Left) */}
-            <div className="absolute left-4 bottom-10 z-30 max-w-[80%] space-y-4">
-               <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-black tracking-tight">{item.author}</h3>
-                  {item.isLive && (
-                    <Badge className="bg-red-500 animate-pulse border-none text-[10px] h-5">LIVE</Badge>
-                  )}
-               </div>
-               <p className="text-sm font-medium leading-relaxed drop-shadow-lg">
-                  {item.content}
-               </p>
-               <div className="flex items-center gap-2 text-xs font-bold text-zinc-300">
-                  <Music2 className="w-4 h-4 animate-bounce" />
-                  <span className="overflow-hidden whitespace-nowrap marquee">
-                     {item.music}
-                  </span>
-               </div>
+            <input
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+              placeholder="Share something with the arena..."
+              className="flex-1 bg-transparent text-white placeholder:text-zinc-600 text-sm outline-none"
+            />
+          </div>
+          <div className="flex items-center justify-between pt-1 border-t border-white/5">
+            <div className="flex gap-2">
+              {['🎮', '🏆', '📸', '🔗'].map((emoji) => (
+                <button key={emoji} className="text-lg hover:scale-110 transition-transform">{emoji}</button>
+              ))}
             </div>
-          </section>
-        ))}
-      </div>
-
-      {/* Bottom Tab Bar (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 p-4 flex justify-around z-50">
-         <button className="text-white"><Zap className="w-6 h-6 fill-white" /></button>
-         <button className="text-zinc-500"><Trophy className="w-6 h-6" /></button>
-         <div className="relative -top-8">
-            <button className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.3)] border-4 border-black">
-               <Plus className="w-8 h-8 text-black" />
+            <button
+              disabled={!newPost.trim()}
+              className="px-5 py-2 bg-white text-black font-black rounded-xl text-sm disabled:opacity-30 hover:bg-zinc-100 transition-all"
+            >
+              POST
             </button>
-         </div>
-         <button className="text-zinc-500"><MessageCircle className="w-6 h-6" /></button>
-         <button className="text-zinc-500">
-            <Avatar className="w-6 h-6 border border-zinc-800">
-               <AvatarFallback className="text-[8px]">ME</AvatarFallback>
-            </Avatar>
-         </button>
-      </nav>
+          </div>
+        </div>
 
-      {/* Mobile Top Header */}
-      <header className="md:hidden fixed top-0 inset-x-0 p-4 flex justify-center gap-6 z-50">
-         <button className="text-sm font-black tracking-tighter text-zinc-400">Following</button>
-         <button className="text-sm font-black tracking-tighter text-white border-b-2 border-white pb-1">For You</button>
-      </header>
+        {/* Posts */}
+        <div className="space-y-4">
+          {posts.map((post, i) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-hidden hover:border-white/10 transition-all"
+            >
+              {/* Post Header */}
+              <div className="flex items-center justify-between p-4 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-xl">{post.user.avatar}</div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">{post.user.name}</span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${post.tagColor}`}>{post.user.badge}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                      <span>Lv.{post.user.level}</span>
+                      <span>·</span>
+                      <span>{post.time}</span>
+                      <span>·</span>
+                      <span className={`font-bold ${post.tagColor}`}>{post.tag}</span>
+                    </div>
+                  </div>
+                </div>
+                <button className="text-zinc-600 hover:text-white transition-colors">
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+              </div>
 
-    </div>
+              {/* Content */}
+              <div className="px-4 pb-3">
+                <p className="text-sm text-zinc-300 leading-relaxed">{post.content}</p>
+              </div>
+
+              {/* Image */}
+              {post.image && (
+                <div className="mx-4 mb-3 rounded-xl overflow-hidden aspect-video bg-zinc-900">
+                  <img src={post.image} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => toggleLike(post.id)}
+                    className={`flex items-center gap-1.5 text-sm font-bold transition-all hover:scale-105 ${post.liked ? 'text-red-400' : 'text-zinc-500 hover:text-white'}`}
+                  >
+                    <Heart className={`w-4 h-4 ${post.liked ? 'fill-red-400' : ''}`} />
+                    {post.likes}
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm font-bold text-zinc-500 hover:text-white transition-colors">
+                    <MessageCircle className="w-4 h-4" />{post.comments}
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm font-bold text-zinc-500 hover:text-white transition-colors">
+                    <Share2 className="w-4 h-4" />{post.shares}
+                  </button>
+                </div>
+                <button className="text-zinc-500 hover:text-white transition-colors">
+                  <Bookmark className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </AppLayout>
   );
 }
