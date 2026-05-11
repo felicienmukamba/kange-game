@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Gamepad2, Play, Trophy, Users, Zap, TrendingUp, Star } from 'lucide-react';
+import { Gamepad2, Play, Trophy, Users, Zap, TrendingUp, Star, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -67,6 +67,29 @@ export default function DashboardPage() {
             <Button variant="outline" onClick={logout} className="border-zinc-800 hover:bg-zinc-900">Logout</Button>
           </div>
         </header>
+
+        {/* Actions Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <Link href="/creator">
+                <Card className="bg-linear-to-br from-indigo-600 to-purple-700 border-none group cursor-pointer hover:scale-[1.02] transition-all">
+                   <CardContent className="p-8">
+                      <Sparkles className="w-12 h-12 text-white/80 mb-4 group-hover:rotate-12 transition-transform" />
+                      <h3 className="text-2xl font-bold text-white mb-2">Creator Studio</h3>
+                      <p className="text-white/60">Create viral challenges and earn coins from participants.</p>
+                   </CardContent>
+                </Card>
+             </Link>
+
+             <Link href="/leaderboard">
+                <Card className="bg-zinc-900 border-zinc-800 group cursor-pointer hover:border-yellow-500/50 transition-all">
+                   <CardContent className="p-8">
+                      <Trophy className="w-12 h-12 text-yellow-500 mb-4 group-hover:scale-110 transition-transform" />
+                      <h3 className="text-2xl font-bold text-white mb-2">Leaderboards</h3>
+                      <p className="text-zinc-500">See where you stand among the world&apos;s best players.</p>
+                   </CardContent>
+                </Card>
+             </Link>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
@@ -127,7 +150,7 @@ export default function DashboardPage() {
                     whileHover={{ scale: 1.02 }}
                     className="group relative aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent z-10" />
                     <div className="absolute top-4 left-4 z-20">
                       <Badge className="bg-red-500 text-white border-none animate-pulse">LIVE</Badge>
                     </div>

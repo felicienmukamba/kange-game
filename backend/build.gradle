@@ -7,7 +7,11 @@ plugins {
 group = 'com.backend'
 version = '0.0.1-SNAPSHOT'
 
-// Removed java toolchain to use system default
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
 
 repositories {
 	mavenCentral()

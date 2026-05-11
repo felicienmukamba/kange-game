@@ -33,3 +33,7 @@ Based on the Event-Driven Microservices pattern (initially implemented as a modu
 - Real-time: STOMP/WebSockets.
 - Database: H2 (Dev) / PostgreSQL (Prod).
 - Cache: Redis (for Leaderboards).
+
+
+Phase 5: Mobile Optimization & Virality (Refining the TikTok-style swipe feed and sharing mechanics).
+Deployment & Infrastructure (Docker, Kubernetes, and CI/CD pipelines).

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rewify-frontend
+  labels:
+    app: rewify-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rewify-frontend
+  template:
+    metadata:
+      labels:
+        app: rewify-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: felicienmukamba/rewify-frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://api.rewify.app/api/v1"
+        - name: NEXT_PUBLIC_WS_URL
+          value: "ws://api.rewify.app/ws"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rewify-frontend
+spec:
+  selector:
+    app: rewify-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer

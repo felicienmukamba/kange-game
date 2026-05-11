@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rewify-backend
+  labels:
+    app: rewify-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rewify-backend
+  template:
+    metadata:
+      labels:
+        app: rewify-backend
+    spec:
+      containers:
+      - name: backend
+        image: felicienmukamba/rewify-backend:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: rewify-config
+        - secretRef:
+            name: rewify-secrets
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rewify-backend
+spec:
+  selector:
+    app: rewify-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

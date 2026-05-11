@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rewify-config
+data:
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service:5432/kangedb"
+  SPRING_DATA_REDIS_HOST: "redis-service"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rewify-secrets
+type: Opaque
+data:
+  # Base64 encoded values
+  OPENAI_API_KEY: "Y29uZmlndXJlLXlvdXItYXBpLWtleQ=="
+  LIVEKIT_API_KEY: "Y29uZmlndXJlLXlvdXItYXBpLWtleQ=="
+  LIVEKIT_API_SECRET: "Y29uZmlndXJlLXlvdXItYXBpLWtleQ=="
+  SPRING_DATASOURCE_PASSWORD: "cGFzc3dvcmQ="
