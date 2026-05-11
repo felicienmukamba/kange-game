@@ -13,10 +13,23 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Users, Trophy, MessageSquare, Gamepad2, Heart, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { LiveKitRoom, VideoConference } from '@livekit/components-react';
+import '@livekit/components-styles';
+
 export default function LivePage() {
   const { id } = useParams();
   const { user } = useAuthStore();
-  const router = useRouter();
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch LiveKit token from backend
+    // const fetchToken = async () => {
+    //   const res = await axios.get(`/api/v1/stream/token?room=${id}`);
+    //   setToken(res.data.token);
+    // };
+    // fetchToken();
+    setToken('mock-livekit-token');
+  }, [id]);
   const [messages, setMessages] = useState<{sender: string, text: string}[]>([
     { sender: 'System', text: 'Welcome to the live session!' },
     { sender: 'RewifyBot', text: 'Game starting in 2 minutes!' }
@@ -56,21 +69,27 @@ export default function LivePage() {
       {/* Left Column: Stream & Quiz */}
       <div className="flex-1 flex flex-col relative">
         
-        {/* Stream Area (Mock) */}
+        {/* Stream Area */}
         <div className="flex-1 bg-zinc-900 relative flex items-center justify-center group">
-          <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
-             <Badge className="bg-red-500 text-white hover:bg-red-600 border-none px-3 py-1 animate-pulse">LIVE</Badge>
-             <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold">
-               <Users className="w-3.5 h-3.5" /> 1,284
-             </div>
-          </div>
-          
-          <div className="text-center space-y-4">
-             <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto border border-indigo-500/40">
-               <Gamepad2 className="w-10 h-10 text-indigo-400" />
-             </div>
-             <div className="text-zinc-500 text-sm font-medium tracking-wide">STREAM VIDEO FEED</div>
-          </div>
+          {token ? (
+            <LiveKitRoom
+              video={true}
+              audio={true}
+              token={token}
+              serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+              data-lk-theme="default"
+              className="w-full h-full"
+            >
+              <VideoConference />
+            </LiveKitRoom>
+          ) : (
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto border border-indigo-500/40">
+                <Gamepad2 className="w-10 h-10 text-indigo-400" />
+              </div>
+              <div className="text-zinc-500 text-sm font-medium tracking-wide">CONNECTING TO STREAM...</div>
+            </div>
+          )}
 
           {/* Action Bar */}
           <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -11,16 +11,30 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Gamepad2, Play, Trophy, Users, Zap, TrendingUp, Star } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
-      router.push('/auth');
-    }
-  }, [user, router]);
+    // WebSocket notification listener setup
+    // socket.on('notification', (data) => {
+    //   toast(data.message, { icon: <Zap className="w-4 h-4 text-yellow-400" /> });
+    // });
+    
+    const timer = setTimeout(() => {
+      toast.info('New tournament starting in 10 minutes!', {
+        description: 'Join the "Global Logic" arena now!',
+        action: {
+          label: 'Join',
+          onClick: () => router.push('/live/tourney-1')
+        },
+      });
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [router]);
 
   if (!user) return null;
 

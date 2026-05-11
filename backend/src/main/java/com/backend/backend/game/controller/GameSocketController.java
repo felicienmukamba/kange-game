@@ -29,9 +29,18 @@ public class GameSocketController {
         messagingTemplate.convertAndSend("/topic/public", gameMessage);
     }
     
+    private final com.backend.backend.ai.AIModerationService aiModerationService;
+
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/public")
     public GameMessage sendMessage(@Payload GameMessage gameMessage) {
+        if (gameMessage.getType().equals("CHAT")) {
+            boolean isSafe = aiModerationService.isContentSafe((String) gameMessage.getContent());
+            if (!isSafe) {
+                gameMessage.setContent("🚫 This message was removed for violating community guidelines.");
+                gameMessage.setSender("System");
+            }
+        }
         return gameMessage;
     }
 }

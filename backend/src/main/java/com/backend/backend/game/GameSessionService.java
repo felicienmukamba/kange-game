@@ -42,10 +42,16 @@ public class GameSessionService {
         return sessions.get(sessionId);
     }
 
-    public void updateScore(String sessionId, String username, int points) {
+    private final com.backend.backend.reward.RewardService rewardService;
+
+    public void finishSession(String sessionId) {
         Session session = sessions.get(sessionId);
         if (session != null) {
-            session.getScores().merge(username, points, Integer::sum);
+            session.setStatus("FINISHED");
+            session.getScores().forEach((username, score) -> {
+                // Logic: 10 XP and 5 Coins per point
+                rewardService.grantReward(username, score * 10L, score * 5L);
+            });
         }
     }
 }
