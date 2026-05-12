@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import ThreeAuthBackground from '@/components/ThreeAuthBackground';
 import { Lock, Mail, User, ArrowRight } from 'lucide-react';
 
-export default function AuthPage() {
+function AuthPageInner() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -202,3 +202,10 @@ export default function AuthPage() {
   );
 }
 
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <AuthPageInner />
+    </Suspense>
+  );
+}
