@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface GameChallengeRepository extends JpaRepository<GameChallenge, Long> {
-    List<GameChallenge> findByCreator(String creator);
+    List<GameChallenge> findByCreatorOrderByCreatedAtDesc(String creator);
+    List<GameChallenge> findByPublicChallengeTrueOrderByCreatedAtDesc();
 }

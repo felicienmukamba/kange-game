@@ -17,7 +17,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     hasError: false
   };
 
-  public static getDerivedStateFromError(_: Error): State {
+  public static getDerivedStateFromError(): State {
     return { hasError: true };
   }
 
@@ -34,7 +34,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
           </div>
           <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
           <p className="text-zinc-500 max-w-md mb-8">
-            The session encountered an unexpected error. Don't worry, your progress is saved.
+            The session encountered an unexpected error. Don&apos;t worry, your progress is saved.
           </p>
           <Button 
             onClick={() => window.location.reload()}

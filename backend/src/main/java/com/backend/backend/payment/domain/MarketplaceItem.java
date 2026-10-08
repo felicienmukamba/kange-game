@@ -21,6 +21,8 @@ public class MarketplaceItem {
     private String name;
     private String description;
     private Long price;
-    private String type; // SKIN, AVATAR, BOOST
+    private String type;     // WEAPON, SHIELD, CROWN, AVATAR, EFFECT
+    private String rarity;   // COMMON, RARE, EPIC, LEGENDARY
+    private String icon;     // emoji shown in the UI
     private String imageUrl;
 }

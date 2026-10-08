@@ -2,11 +2,13 @@ package com.backend.backend.analytics;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
+@ConditionalOnProperty(name = "application.kafka.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class AnalyticsProducer {
 

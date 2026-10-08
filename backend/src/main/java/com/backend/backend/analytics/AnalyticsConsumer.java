@@ -2,11 +2,13 @@ package com.backend.backend.analytics;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
+@ConditionalOnProperty(name = "application.kafka.enabled", havingValue = "true")
 @Slf4j
 public class AnalyticsConsumer {
 

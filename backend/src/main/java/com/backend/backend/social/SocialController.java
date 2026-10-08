@@ -1,7 +1,6 @@
 package com.backend.backend.social;
 
 import com.backend.backend.core.domain.User;
-import com.backend.backend.social.domain.Post;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,7 +16,7 @@ public class SocialController {
     private final PostService postService;
 
     @PostMapping("/posts")
-    public ResponseEntity<Post> createPost(
+    public ResponseEntity<PostService.PostView> createPost(
             @AuthenticationPrincipal User user,
             @RequestBody PostRequest request
     ) {
@@ -25,8 +24,25 @@ public class SocialController {
     }
 
     @GetMapping("/feed")
-    public ResponseEntity<List<Post>> getFeed() {
-        return ResponseEntity.ok(postService.getFeed());
+    public ResponseEntity<List<PostService.PostView>> getFeed(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(postService.getFeed(user.getId()));
+    }
+
+    @PostMapping("/posts/{id}/like")
+    public ResponseEntity<PostService.PostView> toggleLike(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user
+    ) {
+        return ResponseEntity.ok(postService.toggleLike(id, user.getId()));
+    }
+
+    @DeleteMapping("/posts/{id}")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user
+    ) {
+        postService.deletePost(id, user);
+        return ResponseEntity.noContent().build();
     }
 
     public record PostRequest(String content, String mediaUrl) {}

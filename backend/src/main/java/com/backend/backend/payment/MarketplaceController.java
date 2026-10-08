@@ -1,10 +1,16 @@
 package com.backend.backend.payment;
 
+import com.backend.backend.core.domain.User;
+import com.backend.backend.core.dto.UserProfile;
+import com.backend.backend.core.exception.ApiException;
+import com.backend.backend.payment.domain.InventoryItem;
 import com.backend.backend.payment.domain.MarketplaceItem;
+import com.backend.backend.payment.repository.InventoryItemRepository;
 import com.backend.backend.payment.repository.MarketplaceItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +21,7 @@ import java.util.List;
 public class MarketplaceController {
 
     private final MarketplaceItemRepository repository;
+    private final InventoryItemRepository inventoryRepository;
     private final WalletService walletService;
 
     @GetMapping("/items")
@@ -22,17 +29,25 @@ public class MarketplaceController {
         return ResponseEntity.ok(repository.findAll());
     }
 
+    @GetMapping("/inventory")
+    public ResponseEntity<List<InventoryItem>> getInventory(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(inventoryRepository.findByUserIdOrderByAcquiredAtDesc(user.getId()));
+    }
+
     @PostMapping("/purchase/{itemId}")
-    public ResponseEntity<String> purchaseItem(
+    @Transactional
+    public ResponseEntity<UserProfile> purchaseItem(
             @PathVariable Long itemId,
-            Authentication authentication
+            @AuthenticationPrincipal User principal
     ) {
         MarketplaceItem item = repository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
-        
-        walletService.processTransaction(authentication.getName(), -item.getPrice(), "PURCHASE");
-        
-        // Logic to grant the item to the user would go here (e.g. UserInventory)
-        return ResponseEntity.ok("Purchase successful");
+                .orElseThrow(() -> ApiException.notFound("Item not found"));
+        if (inventoryRepository.existsByUserIdAndItemId(principal.getId(), itemId)) {
+            throw ApiException.conflict("You already own " + item.getName());
+        }
+
+        User user = walletService.processTransaction(principal.getUsername(), -item.getPrice(), "PURCHASE");
+        inventoryRepository.save(InventoryItem.builder().user(user).item(item).build());
+        return ResponseEntity.ok(UserProfile.of(user));
     }
 }

@@ -1,21 +1,44 @@
 spring:
   application:
     name: backend
+  # Defaults to an in-memory H2 database so the API runs with zero setup.
+  # docker-compose / k8s override these with PostgreSQL settings.
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/rewify}
-    username: ${SPRING_DATASOURCE_USERNAME:user}
-    password: ${SPRING_DATASOURCE_PASSWORD:password}
-    driverClassName: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:rewify;DB_CLOSE_DELAY=-1}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    open-in-view: false
   h2:
     console:
       enabled: false
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+  ai:
+    # Chat is disabled unless SPRING_AI_MODEL_CHAT=openai and OPENAI_API_KEY are set.
+    # Without it, quiz generation and moderation fall back to built-in logic.
+    model:
+      chat: ${SPRING_AI_MODEL_CHAT:none}
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
 
 management:
   endpoints:
@@ -24,18 +47,26 @@ management:
         include: "health,info,prometheus,metrics"
   endpoint:
     health:
-      show-details: always
-  metrics:
-    export:
-      prometheus:
+      show-details: when-authorized
+      probes:
         enabled: true
+  health:
+    mail:
+      enabled: false
 
 application:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  kafka:
+    # Analytics / notification events over Kafka. Off by default so no broker is required.
+    enabled: ${KAFKA_ENABLED:false}
   security:
     jwt:
-      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      # Base64-encoded 256-bit key. Override JWT_SECRET in every non-local environment.
+      secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
       expiration: 86400000 # 1 day
   stream:
     livekit:
-      api-key: ${LIVEKIT_API_KEY:devkey}
-      api-secret: ${LIVEKIT_API_SECRET:secret}
+      url: ${LIVEKIT_URL:}
+      api-key: ${LIVEKIT_API_KEY:}
+      api-secret: ${LIVEKIT_API_SECRET:}

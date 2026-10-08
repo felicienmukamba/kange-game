@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useRef, useState, useEffect, Suspense } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { PerspectiveCamera, RoundedBox, Float, Text3D, MeshDistortMaterial, Sphere, Box, Torus, Ring } from '@react-three/drei';
+import React, { useRef, useState, useSyncExternalStore, Suspense } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PerspectiveCamera, Float, MeshDistortMaterial, Sphere, Torus } from '@react-three/drei';
 import * as THREE from 'three';
-import gsap from 'gsap';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -57,7 +56,7 @@ const SLIDES = [
 ];
 
 /* ─── Gaming Scene: floating cubes (game grid) ─── */
-function GamingScene({ active }: { active: boolean }) {
+function GamingScene() {
   const groupRef = useRef<THREE.Group>(null);
   const cubeRefs = useRef<THREE.Mesh[]>([]);
   const GRID = 4;
@@ -103,7 +102,7 @@ function GamingScene({ active }: { active: boolean }) {
 }
 
 /* ─── Streaming Scene: waveform bars + orbit ring ─── */
-function StreamScene({ active }: { active: boolean }) {
+function StreamScene() {
   const groupRef = useRef<THREE.Group>(null);
   const barsRef = useRef<THREE.Mesh[]>([]);
   const BAR_COUNT = 24;
@@ -150,7 +149,7 @@ function StreamScene({ active }: { active: boolean }) {
 }
 
 /* ─── Marketplace Scene: floating coins & gems ─── */
-function MarketScene({ active }: { active: boolean }) {
+function MarketScene() {
   const groupRef = useRef<THREE.Group>(null);
   const ITEMS = 12;
 
@@ -188,7 +187,7 @@ function MarketScene({ active }: { active: boolean }) {
 }
 
 /* ─── Social Scene: network nodes ─── */
-function SocialScene({ active }: { active: boolean }) {
+function SocialScene() {
   const groupRef = useRef<THREE.Group>(null);
   const NODES = 10;
 
@@ -242,18 +241,17 @@ function SocialScene({ active }: { active: boolean }) {
 const SCENE_COMPONENTS = [GamingScene, StreamScene, MarketScene, SocialScene];
 
 /* ─── Particle Field ─── */
+// Random but generated once at module load, keeping render pure.
+const PARTICLE_COUNT = 120;
+const PARTICLE_POSITIONS = (() => {
+  const arr = new Float32Array(PARTICLE_COUNT * 3);
+  for (let i = 0; i < arr.length; i++) arr[i] = (Math.random() - 0.5) * 20;
+  return arr;
+})();
+
 function Particles({ color }: { color: string }) {
   const ref = useRef<THREE.Points>(null);
-  const COUNT = 120;
-  const positions = React.useMemo(() => {
-    const arr = new Float32Array(COUNT * 3);
-    for (let i = 0; i < COUNT; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 20;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 20;
-    }
-    return arr;
-  }, []);
+  const positions = PARTICLE_POSITIONS;
 
   useFrame((state) => {
     if (ref.current) {
@@ -277,7 +275,7 @@ function ActiveScene({ slideIndex, color }: { slideIndex: number, color: string 
   const SceneComponent = SCENE_COMPONENTS[slideIndex];
   return (
     <>
-      <SceneComponent active />
+      <SceneComponent />
       <Particles color={color} />
     </>
   );
@@ -287,10 +285,8 @@ function ActiveScene({ slideIndex, color }: { slideIndex: number, color: string 
 export default function ThreeCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const slide = SLIDES[activeIndex];
-
-  useEffect(() => { setMounted(true); }, []);
 
   const go = (dir: 1 | -1) => {
     if (isTransitioning) return;

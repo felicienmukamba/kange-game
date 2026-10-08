@@ -27,8 +27,7 @@ public class ApplicationConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService());
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -41,15 +40,5 @@ public class ApplicationConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public org.springframework.ai.chat.client.ChatClient.Builder chatClientBuilder(org.springframework.ai.chat.model.ChatModel chatModel) {
-        return org.springframework.ai.chat.client.ChatClient.builder(chatModel);
-    }
-
-    @Bean
-    public org.springframework.ai.chat.client.ChatClient chatClient(org.springframework.ai.chat.client.ChatClient.Builder builder) {
-        return builder.build();
     }
 }

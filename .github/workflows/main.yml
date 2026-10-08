@@ -16,11 +16,12 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-    - name: Build with Gradle
+        cache: 'gradle'
+    - name: Build and test with Gradle
       run: |
         cd backend
         chmod +x gradlew
-        ./gradlew build -x test
+        ./gradlew build
     - name: Build and Push Docker Image
       if: github.event_name == 'push'
       run: |
@@ -36,10 +37,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
     - name: Install dependencies
       run: |
         cd frontend
-        npm install
+        npm ci
+    - name: Lint and type-check
+      run: |
+        cd frontend
+        npm run lint
+        npx tsc --noEmit
     - name: Build Next.js
       run: |
         cd frontend
@@ -47,6 +55,9 @@ jobs:
     - name: Build and Push Docker Image
       if: github.event_name == 'push'
       run: |
-        docker build -t felicienmukamba/rewify-frontend:latest ./frontend
+        docker build \
+          --build-arg NEXT_PUBLIC_API_URL=${{ vars.PUBLIC_API_URL || 'http://localhost:8080/api/v1' }} \
+          --build-arg NEXT_PUBLIC_WS_URL=${{ vars.PUBLIC_WS_URL || 'http://localhost:8080/ws' }} \
+          -t felicienmukamba/rewify-frontend:latest ./frontend
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
         docker push felicienmukamba/rewify-frontend:latest

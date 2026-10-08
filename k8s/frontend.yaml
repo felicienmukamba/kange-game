@@ -19,11 +19,9 @@ spec:
         image: felicienmukamba/rewify-frontend:latest
         ports:
         - containerPort: 3000
-        env:
-        - name: NEXT_PUBLIC_API_URL
-          value: "http://api.rewify.app/api/v1"
-        - name: NEXT_PUBLIC_WS_URL
-          value: "ws://api.rewify.app/ws"
+        # NEXT_PUBLIC_API_URL / NEXT_PUBLIC_WS_URL are baked in at image build time:
+        #   docker build --build-arg NEXT_PUBLIC_API_URL=https://api.rewify.app/api/v1 \
+        #                --build-arg NEXT_PUBLIC_WS_URL=https://api.rewify.app/ws ./frontend
 ---
 apiVersion: v1
 kind: Service

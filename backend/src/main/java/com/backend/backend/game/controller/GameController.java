@@ -6,8 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,24 +22,26 @@ public class GameController {
     }
 
     @MessageMapping("/game/{roomId}/join")
-    public void joinGame(@DestinationVariable String roomId, Authentication authentication) {
-        // Just ensuring session exists for demo purposes
-        if (gameSessionService.getSession(roomId) == null) {
-            gameSessionService.createSession(roomId);
-        }
+    public void joinGame(@DestinationVariable String roomId, Principal principal) {
+        gameSessionService.join(roomId, principal.getName());
+    }
+
+    @MessageMapping("/game/{roomId}/leave")
+    public void leaveGame(@DestinationVariable String roomId, Principal principal) {
+        gameSessionService.leave(roomId, principal.getName());
     }
 
     @MessageMapping("/game/{roomId}/start")
-    public void startGame(@DestinationVariable String roomId) {
-        gameSessionService.startSession(roomId);
+    public void startGame(@DestinationVariable String roomId, Principal principal) {
+        gameSessionService.startSession(roomId, principal.getName());
     }
 
     @MessageMapping("/game/{roomId}/answer")
     public void submitAnswer(
             @DestinationVariable String roomId,
             @Payload AnswerPayload payload,
-            Authentication authentication
+            Principal principal
     ) {
-        gameSessionService.submitAnswer(roomId, authentication.getName(), payload.getAnswerIndex());
+        gameSessionService.submitAnswer(roomId, principal.getName(), payload.getAnswerIndex());
     }
 }

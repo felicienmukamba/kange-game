@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/app/lib/store';
+import { toast } from 'sonner';
+import { useAuthStore, useHydrated, type User } from '@/app/lib/store';
+import { api, apiError } from '@/app/lib/api';
 import { Gamepad2, Tv, ShoppingBag, CheckCircle2, ArrowRight, Zap, Trophy, Users } from 'lucide-react';
 
 const STEPS = [
@@ -59,8 +61,14 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
+  const { user, token, setUser } = useAuthStore();
+  const hydrated = useHydrated();
+
+  useEffect(() => {
+    if (hydrated && !token) router.replace('/auth');
+  }, [hydrated, token, router]);
 
   const toggleInterest = (id: string) => {
     setSelectedInterests((prev) =>
@@ -68,14 +76,31 @@ export default function OnboardingPage() {
     );
   };
 
-  const next = () => {
+  const saveAvatar = async () => {
+    const emoji = AVATARS.find((a) => a.id === selectedAvatar)?.emoji;
+    if (!emoji) return true;
+    setSaving(true);
+    try {
+      const res = await api.put<User>('/profile/update', { avatar: emoji });
+      setUser(res.data);
+      return true;
+    } catch (error) {
+      toast.error(apiError(error, 'Could not save your avatar'));
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const next = async () => {
+    if (step === 2 && !(await saveAvatar())) return;
     if (step < STEPS.length - 1) setStep((s) => s + 1);
     else router.push('/dashboard');
   };
 
   const canProceed = () => {
     if (step === 1) return selectedInterests.length > 0;
-    if (step === 2) return selectedAvatar !== null;
+    if (step === 2) return selectedAvatar !== null && !saving;
     return true;
   };
 
@@ -339,7 +364,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
                 <div className="w-full grid grid-cols-3 gap-2 text-center">
-                  {[{ label: 'Level', value: '1' }, { label: 'Coins', value: '100' }, { label: 'Rank', value: 'NEW' }].map(item => (
+                  {[{ label: 'Level', value: String(user?.level ?? 1) }, { label: 'Coins', value: String(user?.coins ?? 0) }, { label: 'Role', value: user?.role ?? 'PLAYER' }].map(item => (
                     <div key={item.label} className="bg-white/5 rounded-xl p-3">
                       <div className="text-lg font-black">{item.value}</div>
                       <div className="text-[10px] text-zinc-500 font-bold uppercase">{item.label}</div>

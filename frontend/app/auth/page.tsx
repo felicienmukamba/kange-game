@@ -1,12 +1,13 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { api, apiError, type AuthResponse } from '@/app/lib/api';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuthStore } from '@/app/lib/store';
+import { useAuthStore, useHydrated } from '@/app/lib/store';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import ThreeAuthBackground from '@/components/ThreeAuthBackground';
@@ -17,30 +18,33 @@ function AuthPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const hydrated = useHydrated();
   const defaultTab = searchParams.get('signup') === 'true' ? 'register' : 'login';
+
+  // Already signed in when the page opens: skip the form. Reads the token once
+  // (not as a dependency) so a fresh login's own redirect isn't overridden.
+  useEffect(() => {
+    if (hydrated && useAuthStore.getState().token) router.replace('/dashboard');
+  }, [hydrated, router]);
+
+  const completeAuth = (res: AuthResponse, isNew: boolean) => {
+    setAuth(res.user, res.token);
+    toast.success(isNew ? "Account created! Let's get started." : 'Welcome back to the arena!');
+    router.push(isNew || !res.user.avatar ? '/onboarding' : '/dashboard');
+  };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.currentTarget));
     setIsLoading(true);
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
-
     try {
-      setTimeout(() => {
-        setAuth({
-          id: 1,
-          username: data.username as string,
-          email: 'user@example.com',
-          role: 'PLAYER',
-          level: 1,
-          xp: 0,
-          coins: 100
-        }, 'mock-jwt-token');
-        toast.success('Welcome back to the arena!');
-        router.push('/onboarding'); // Redirect to onboarding for new flow
-      }, 1500);
+      const res = await api.post<AuthResponse>('/auth/authenticate', {
+        username: String(data.username).trim(),
+        password: data.password,
+      });
+      completeAuth(res.data, false);
     } catch (error) {
-      toast.error('Invalid credentials');
+      toast.error(apiError(error, 'Invalid credentials'));
     } finally {
       setIsLoading(false);
     }
@@ -48,12 +52,21 @@ function AuthPageInner() {
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.currentTarget));
     setIsLoading(true);
-    setTimeout(() => {
-      toast.success('Account created! Let\'s get started.');
+    try {
+      const res = await api.post<AuthResponse>('/auth/register', {
+        username: String(data.username).trim(),
+        email: String(data.email).trim(),
+        password: data.password,
+        role: data.role || 'PLAYER',
+      });
+      completeAuth(res.data, true);
+    } catch (error) {
+      toast.error(apiError(error, 'Could not create account'));
+    } finally {
       setIsLoading(false);
-      router.push('/auth'); // Or auto-login
-    }, 1500);
+    }
   };
 
   return (
@@ -84,7 +97,7 @@ function AuthPageInner() {
           </CardHeader>
 
           <CardContent className="px-8">
-            <Tabs defaultValue={defaultTab} className="w-full">
+            <Tabs key={defaultTab} defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-8 bg-white/5 border border-white/10 p-1 h-12">
                 <TabsTrigger 
                   value="login" 
@@ -107,6 +120,7 @@ function AuthPageInner() {
                     <Input
                       name="username"
                       placeholder="Username"
+                      autoComplete="username"
                       className="pl-11 h-12 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:border-white/40 transition-all rounded-xl"
                       required
                     />
@@ -116,6 +130,7 @@ function AuthPageInner() {
                     <Input
                       name="password"
                       type="password"
+                      autoComplete="current-password"
                       placeholder="Password"
                       className="pl-11 h-12 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:border-white/40 transition-all rounded-xl"
                       required
@@ -141,7 +156,12 @@ function AuthPageInner() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-white transition-colors" />
                     <Input
                       name="username"
-                      placeholder="Username"
+                      placeholder="Username (letters, digits, _)"
+                      autoComplete="username"
+                      minLength={3}
+                      maxLength={20}
+                      pattern="[A-Za-z0-9_]+"
+                      title="3-20 letters, digits or underscores"
                       className="pl-11 h-12 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:border-white/40 transition-all rounded-xl"
                       required
                     />
@@ -161,10 +181,26 @@ function AuthPageInner() {
                     <Input
                       name="password"
                       type="password"
-                      placeholder="Password"
+                      autoComplete="new-password"
+                      minLength={6}
+                      placeholder="Password (min. 6 characters)"
                       className="pl-11 h-12 bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:border-white/40 transition-all rounded-xl"
                       required
                     />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Account type">
+                    {[
+                      { value: 'PLAYER', label: '🎮 Player' },
+                      { value: 'STREAMER', label: '📺 Streamer' },
+                      { value: 'CREATOR', label: '✨ Creator' },
+                    ].map((r) => (
+                      <label key={r.value} className="cursor-pointer">
+                        <input type="radio" name="role" value={r.value} defaultChecked={r.value === 'PLAYER'} className="peer sr-only" />
+                        <span className="block text-center text-xs font-bold py-2.5 rounded-xl border border-white/10 bg-white/5 text-zinc-400 peer-checked:bg-white peer-checked:text-black transition-all">
+                          {r.label}
+                        </span>
+                      </label>
+                    ))}
                   </div>
                   <Button 
                     type="submit" 

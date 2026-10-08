@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/ai")
@@ -23,5 +24,10 @@ public class AIController {
             @RequestParam(defaultValue = "5") int count
     ) {
         return ResponseEntity.ok(aiChallengeGenerator.generateQuiz(topic, count));
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Boolean>> status() {
+        return ResponseEntity.ok(Map.of("aiEnabled", aiChallengeGenerator.isAiEnabled()));
     }
 }

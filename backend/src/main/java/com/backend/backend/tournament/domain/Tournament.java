@@ -4,15 +4,18 @@ import com.backend.backend.core.domain.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "tournaments")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,7 +31,13 @@ public class Tournament {
 
     private String status; // UPCOMING, ONGOING, COMPLETED
 
+    /** Question topic used by the tournament's game room. */
+    private String topic;
+
     private Integer prizePool;
+
+    @Builder.Default
+    private Integer maxParticipants = 64;
 
     @ManyToMany
     @JoinTable(
@@ -36,7 +45,8 @@ public class Tournament {
         joinColumns = @JoinColumn(name = "tournament_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<User> participants;
+    @Builder.Default
+    private Set<User> participants = new HashSet<>();
 
     private LocalDateTime startsAt;
 }

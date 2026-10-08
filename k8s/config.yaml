@@ -3,17 +3,23 @@ kind: ConfigMap
 metadata:
   name: rewify-config
 data:
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service:5432/kangedb"
-  SPRING_DATA_REDIS_HOST: "redis-service"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service:5432/rewify"
+  SPRING_DATASOURCE_USERNAME: "rewify"
+  CORS_ALLOWED_ORIGINS: "https://rewify.app"
+  # Set to "openai" (and provide OPENAI_API_KEY) to enable AI quiz generation
+  SPRING_AI_MODEL_CHAT: "none"
+  LIVEKIT_URL: ""
 ---
+# Template only — replace every value before applying (values are base64-encoded).
+# Prefer creating it out-of-band: kubectl create secret generic rewify-secrets --from-literal=...
 apiVersion: v1
 kind: Secret
 metadata:
   name: rewify-secrets
 type: Opaque
 data:
-  # Base64 encoded values
-  OPENAI_API_KEY: "Y29uZmlndXJlLXlvdXItYXBpLWtleQ=="
-  LIVEKIT_API_KEY: "Y29uZmlndXJlLXlvdXItYXBpLWtleQ=="
-  LIVEKIT_API_SECRET: "Y29uZmlndXJlLXlvdXItYXBpLWtleQ=="
-  SPRING_DATASOURCE_PASSWORD: "cGFzc3dvcmQ="
+  SPRING_DATASOURCE_PASSWORD: "Y2hhbmdlLW1l"      # change-me
+  JWT_SECRET: "Y2hhbmdlLW1l"                      # base64 of a base64-encoded 256-bit key
+  OPENAI_API_KEY: ""
+  LIVEKIT_API_KEY: ""
+  LIVEKIT_API_SECRET: ""
