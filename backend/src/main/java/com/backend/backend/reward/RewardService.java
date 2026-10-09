@@ -37,6 +37,21 @@ public class RewardService {
         });
     }
 
+    public record Reward(long xp, long coins) {}
+
+    /** Solo runs pay on a 0-100 performance rating: up to 200 XP and 10 coins. */
+    @Transactional
+    public Reward grantSoloReward(String username, int rating, boolean rewarded) {
+        int r = Math.clamp(rating, 0, 100);
+        Reward reward = rewarded ? new Reward(r * 2L, r / 10) : new Reward(0, 0);
+        userRepository.findByUsername(username).ifPresent(user -> {
+            applyReward(user, reward.xp(), reward.coins());
+            user.setGamesPlayed(user.getGamesPlayed() + 1);
+            userRepository.save(user);
+        });
+        return reward;
+    }
+
     private void applyReward(User user, long xpAmount, long coinsAmount) {
         user.setXp(user.getXp() + xpAmount);
         user.setCoins(user.getCoins() + coinsAmount);

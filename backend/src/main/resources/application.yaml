@@ -56,7 +56,8 @@ management:
 
 application:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+    # Any localhost port is allowed by default so the Flutter web dev server (random port) works.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:[*],http://127.0.0.1:[*]}
   kafka:
     # Analytics / notification events over Kafka. Off by default so no broker is required.
     enabled: ${KAFKA_ENABLED:false}

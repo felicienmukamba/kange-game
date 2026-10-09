@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 import java.util.Arrays;
 
@@ -16,6 +18,9 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    /** Server and client heartbeat interval, so dead mobile connections are detected quickly. */
+    private static final long HEARTBEAT_MS = 10_000;
+
     private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
 
     @Value("${application.cors.allowed-origins}")
@@ -23,16 +28,32 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue");
+        ThreadPoolTaskScheduler heartbeatScheduler = new ThreadPoolTaskScheduler();
+        heartbeatScheduler.setPoolSize(1);
+        heartbeatScheduler.setThreadNamePrefix("ws-heartbeat-");
+        heartbeatScheduler.initialize();
+
+        config.enableSimpleBroker("/topic", "/queue")
+                .setHeartbeatValue(new long[]{HEARTBEAT_MS, HEARTBEAT_MS})
+                .setTaskScheduler(heartbeatScheduler);
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(",")).map(String::trim).toArray(String[]::new))
-                .withSockJS();
+        String[] origins = Arrays.stream(allowedOrigins.split(",")).map(String::trim).toArray(String[]::new);
+        // SockJS endpoint for the web app
+        registry.addEndpoint("/ws").setAllowedOriginPatterns(origins).withSockJS();
+        // Plain WebSocket endpoint for the mobile / desktop app (no SockJS framing overhead)
+        registry.addEndpoint("/ws-native").setAllowedOriginPatterns(origins);
+    }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setMessageSizeLimit(64 * 1024)
+                .setSendBufferSizeLimit(512 * 1024)
+                .setSendTimeLimit(15_000);
     }
 
     @Override

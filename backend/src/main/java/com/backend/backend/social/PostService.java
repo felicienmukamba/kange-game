@@ -1,6 +1,8 @@
 package com.backend.backend.social;
 
 import com.backend.backend.ai.AIModerationService;
+import com.backend.backend.quest.ActivityService;
+import com.backend.backend.quest.domain.ActivityType;
 import com.backend.backend.core.domain.Role;
 import com.backend.backend.core.domain.User;
 import com.backend.backend.core.exception.ApiException;
@@ -24,6 +26,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final AIModerationService moderationService;
+    private final ActivityService activityService;
 
     @Transactional
     public PostView createPost(User author, String content, String mediaUrl) {
@@ -39,6 +42,7 @@ public class PostService {
                 .content(text)
                 .mediaUrl(mediaUrl == null || mediaUrl.isBlank() ? null : mediaUrl.trim())
                 .build());
+        activityService.record(author.getUsername(), ActivityType.POST_CREATED);
         return PostView.of(post, author.getId());
     }
 

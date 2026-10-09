@@ -4,6 +4,8 @@ import com.backend.backend.game.model.GameChallenge;
 import com.backend.backend.game.model.QuizQuestion;
 import com.backend.backend.game.repository.GameChallengeRepository;
 import com.backend.backend.monitoring.MetricsService;
+import com.backend.backend.quest.ActivityService;
+import com.backend.backend.quest.domain.ActivityType;
 import com.backend.backend.reward.RewardService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +77,7 @@ public class GameSessionService {
     private final GameChallengeRepository challengeRepository;
     private final MetricsService metricsService;
     private final ChallengeService challengeService;
+    private final ActivityService activityService;
 
     public Session join(String roomId, String username) {
         Session session = sessions.computeIfAbsent(roomId, id -> createSession(id, username));
@@ -92,6 +95,13 @@ public class GameSessionService {
         if (session == null) return;
         session.getPlayers().remove(username);
         broadcastLobby(session);
+    }
+
+    /** Removes a disconnected user from every quiz room they were in. */
+    public void leaveAll(String username) {
+        sessions.values().forEach(s -> {
+            if (s.getPlayers().remove(username)) broadcastLobby(s);
+        });
     }
 
     public void startSession(String roomId, String username) {
@@ -172,10 +182,18 @@ public class GameSessionService {
     }
 
     private static String titleFor(String topic) {
-        if (QuestionBank.isMathTopic(topic)) return "Speed Math";
+        if (QuestionBank.isMathTopic(topic)) return "Calcul éclair";
         return switch (topic.toLowerCase(Locale.ROOT)) {
-            case "words" -> "Word Rush";
-            case "gaming" -> "Gamer Trivia";
+            case "words", "langue" -> "Duel de mots";
+            case "gaming" -> "Quiz gamer";
+            case "football", "foot" -> "Quiz foot";
+            case "manga" -> "Quiz manga";
+            case "geo", "drapeaux" -> "Tour du monde";
+            case "afrique" -> "Quiz Afrique";
+            case "musique" -> "Blind test";
+            case "science" -> "Quiz science";
+            case "histoire" -> "Quiz histoire";
+            case "logique", "pieges" -> "Casse-tête";
             default -> "Quiz Battle";
         };
     }
@@ -230,8 +248,10 @@ public class GameSessionService {
         int best = session.getScores().values().stream().max(Integer::compare).orElse(0);
         session.getScores().forEach((username, score) -> {
             try {
-                boolean won = score > 0 && score == best;
+                boolean won = score > 0 && score == best && session.getScores().size() > 1;
                 rewardService.grantGameReward(username, score, won);
+                activityService.record(username, ActivityType.GAME_PLAYED);
+                if (won) activityService.record(username, ActivityType.GAME_WON);
             } catch (Exception ex) {
                 log.error("Failed to grant reward to {}: {}", username, ex.getMessage());
             }

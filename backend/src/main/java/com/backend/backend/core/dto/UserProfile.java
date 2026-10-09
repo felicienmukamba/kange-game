@@ -15,12 +15,14 @@ public record UserProfile(
         long coins,
         int reputation,
         int gamesPlayed,
-        int wins
+        int wins,
+        int dailyStreak
 ) {
     public static UserProfile of(User u) {
         return new UserProfile(
                 u.getId(), u.getUsername(), u.getEmail(), u.getRole().name(), u.getAvatar(), u.getBio(),
-                u.getLevel(), u.getXp(), u.getCoins(), u.getReputation(), u.getGamesPlayed(), u.getWins()
+                u.getLevel(), u.getXp(), u.getCoins(), u.getReputation(), u.getGamesPlayed(), u.getWins(),
+                u.getDailyStreak() == null ? 0 : u.getDailyStreak()
         );
     }
 }
